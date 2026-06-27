@@ -1,5 +1,7 @@
 const WebSocket = require("ws");
 
+const MAX_PLAYERS = 4;
+
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 // code -> { host: WebSocket, peers: Map(peerId -> WebSocket), nextPeerId: int }
@@ -36,6 +38,11 @@ wss.on("connection", (ws) => {
 				const room = rooms.get(msg.code);
 				if (!room) {
 					send(ws, { type: "error", message: "Room not found" });
+					return;
+				}
+				// host counts as 1, so max clients is MAX_PLAYERS - 1
+				if (room.peers.size >= MAX_PLAYERS - 1) {
+					send(ws, { type: "error", message: "Room is full" });
 					return;
 				}
 				const peerId = room.nextPeerId++;
