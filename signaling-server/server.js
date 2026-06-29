@@ -52,6 +52,23 @@ wss.on("connection", (ws) => {
 				send(room.host, { type: "peer_joined", peerId });
 				break;
 			}
+			case "find_random": {
+				// Collect all rooms that still have at least one open slot.
+				// host counts as 1, so total occupants = 1 + peers.size.
+				const available = [];
+				for (const [code, room] of rooms.entries()) {
+					if (1 + room.peers.size < MAX_PLAYERS) {
+						available.push(code);
+					}
+				}
+				if (available.length > 0) {
+					const picked = available[Math.floor(Math.random() * available.length)];
+					send(ws, { type: "found_random", code: picked });
+				} else {
+					send(ws, { type: "error", message: "No rooms available" });
+				}
+				break;
+			}
 			case "offer":
 			case "answer": {
 				const info = clients.get(ws);
